@@ -7,6 +7,7 @@
 #include <kern/monitor.h>
 #include <kern/console.h>
 
+
 // Test the stack backtrace function (lab 1 only)
 void
 test_backtrace(int x)
@@ -34,6 +35,8 @@ i386_init(void)
 	cons_init();
 
 	cprintf("444544 decimal is %o octal!\n", 444544);
+   	cprintf("Octal test: %o\n", 12345); // Your test line
+
 
 	// Test the stack backtrace function (lab 1 only)
 	test_backtrace(5);
