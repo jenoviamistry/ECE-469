@@ -90,7 +90,7 @@ mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 				debuginfo.eip_fn_name,
 				eip - debuginfo.eip_fn_addr);
 		}
-
+/*  */
 		ebp = *((uintptr_t*) ebp);
 	}
 

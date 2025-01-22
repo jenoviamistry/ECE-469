@@ -225,7 +225,7 @@ debuginfo_eip(uintptr_t addr, struct Eipdebuginfo *info)
 		     lline++)
 			info->eip_fn_narg++;
 
-	// Debugging output for the final info
+	// Debugging output for the final 
    /* cprintf("Debug info: addr=%08x, file=%s, line=%d, fn=%.*s, fn_addr=%08x, args=%d\n",
         addr,
         info->eip_file,
