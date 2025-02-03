@@ -9,6 +9,21 @@
 #include <kern/pmap.h>
 #include <kern/kclock.h>
 
+<<<<<<< HEAD
+=======
+
+// Test the stack backtrace function (lab 1 only)
+void
+test_backtrace(int x)
+{
+	cprintf("entering test_backtrace %d\n", x);
+	if (x > 0)
+		test_backtrace(x-1);
+	else
+		mon_backtrace(0, 0, 0);
+	cprintf("leaving test_backtrace %d\n", x);
+}
+>>>>>>> lab1
 
 void
 i386_init(void)
@@ -25,6 +40,8 @@ i386_init(void)
 	cons_init();
 
 	cprintf("444544 decimal is %o octal!\n", 444544);
+   	cprintf("Octal test: %o\n", 12345); // Your test line
+
 
 	// Lab 2 memory management initialization functions
 	mem_init();

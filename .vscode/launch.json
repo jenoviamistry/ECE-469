@@ -3,6 +3,7 @@
     "configurations": [
         {
             "name": "(gdb) Attach to JOS Kernel",
+<<<<<<< HEAD
             "type": "cppdbg", 
             "request": "launch",
             "program": "${workspaceRoot}/obj/kern/kernel",
@@ -30,6 +31,18 @@
             "args": {
                 "command": "expr `id -u` % 5000 + 25000"
             }
+=======
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/obj/kern/kernel.img",
+            "MIMode": "gdb",
+            "miDebuggerServerAddress": "localhost:25047",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "setupCommands": [
+                { "text": "target remote localhost:25047", "description": "Attach to GDB", "ignoreFailures": false }
+            ],
+            "logging": { "trace": true, "traceResponse": true, "engineLogging": true }
+>>>>>>> lab1
         }
     ]
 }
