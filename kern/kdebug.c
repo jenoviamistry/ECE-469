@@ -115,7 +115,7 @@ debuginfo_eip(uintptr_t addr, struct Eipdebuginfo *info)
 {
 	const struct Stab *stabs, *stab_end;
 	const char *stabstr, *stabstr_end;
-	int lfile, rfile, lfun, rfun, lline, rline;
+	int lfile = 0, rfile = 0, lfun = 0, rfun = 0, lline = 0, rline = 0;
 
 	// Initialize *info
 	info->eip_file = "<unknown>";
@@ -152,10 +152,15 @@ debuginfo_eip(uintptr_t addr, struct Eipdebuginfo *info)
 		// LAB 3: Your code here.
 	}
 
+	//cprintf("Stab bounds: stabs=%p, stab_end=%p\n", stabs, stab_end);
+    //cprintf("String table bounds: stabstr=%p, stabstr_end=%p\n", stabstr, stabstr_end);
+
 	// String table validity checks
 	if (stabstr_end <= stabstr || stabstr_end[-1] != 0)
+	{
+		//cprintf("Invalid string table bounds!\n");
 		return -1;
-
+	}
 	// Now we find the right stabs that define the function containing
 	// 'eip'.  First, we find the basic source file containing 'eip'.
 	// Then, we look in that source file for the function.  Then we look
@@ -165,14 +170,19 @@ debuginfo_eip(uintptr_t addr, struct Eipdebuginfo *info)
 	lfile = 0;
 	rfile = (stab_end - stabs) - 1;
 	stab_binsearch(stabs, &lfile, &rfile, N_SO, addr);
-	if (lfile == 0)
-		return -1;
+	//cprintf("N_FUN search: lfun=%d, rfun=%d\n", lfun, rfun);
 
+	if (lfile == 0)
+	{
+		//cprintf("No source file found for address %08x\n", addr);
+		return -1;
+	}
 	// Search within that file's stabs for the function definition
 	// (N_FUN).
 	lfun = lfile;
 	rfun = rfile;
 	stab_binsearch(stabs, &lfun, &rfun, N_FUN, addr);
+	//cprintf("N_FUN search: lfun=%d, rfun=%d\n", lfun, rfun);
 
 	if (lfun <= rfun) {
 		// stabs[lfun] points to the function name
@@ -194,7 +204,6 @@ debuginfo_eip(uintptr_t addr, struct Eipdebuginfo *info)
 	// Ignore stuff after the colon.
 	info->eip_fn_namelen = strfind(info->eip_fn_name, ':') - info->eip_fn_name;
 
-
 	// Search within [lline, rline] for the line number stab.
 	// If found, set info->eip_line to the correct line number.
     // e.g., info->eip_line = stabs[lline].n_desc
@@ -205,7 +214,20 @@ debuginfo_eip(uintptr_t addr, struct Eipdebuginfo *info)
 	//	Look at the STABS documentation and <inc/stab.h> to find
 	//	which one.
 	// Your code here.
+	//search within 
+	stab_binsearch(stabs, &lline, &rline, N_SLINE, addr);
+    //cprintf("N_SLINE search: lline=%d, rline=%d\n", lline, rline);
 
+	if (lline <= rline) // if found
+	{
+		info->eip_line = stabs[lline].n_desc;  // set to correct line number
+	}
+	else 
+	{
+		cprintf("No line number found for address %08x\n", addr);
+		info->eip_line = 0; // Default to 0 if no line number is found
+		return -1;
+	}
 
 	// Search backwards from the line number for the relevant filename
 	// stab.
@@ -227,6 +249,16 @@ debuginfo_eip(uintptr_t addr, struct Eipdebuginfo *info)
 		     lline < rfun && stabs[lline].n_type == N_PSYM;
 		     lline++)
 			info->eip_fn_narg++;
+
+	// Debugging output for the final 
+   /* cprintf("Debug info: addr=%08x, file=%s, line=%d, fn=%.*s, fn_addr=%08x, args=%d\n",
+        addr,
+        info->eip_file,
+        info->eip_line,
+        info->eip_fn_namelen,
+        info->eip_fn_name,
+        info->eip_fn_addr,
+        info->eip_fn_narg);*/
 
 	return 0;
 }
