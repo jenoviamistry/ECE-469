@@ -126,12 +126,15 @@ debuginfo_eip(uintptr_t addr, struct Eipdebuginfo *info)
 	info->eip_fn_narg = 0;
 
 	// Find the relevant set of stabs
-	if (addr >= ULIM) {
+	if (addr >= ULIM) 
+	{
 		stabs = __STAB_BEGIN__;
 		stab_end = __STAB_END__;
 		stabstr = __STABSTR_BEGIN__;
 		stabstr_end = __STABSTR_END__;
-	} else {
+	} 
+	else 
+	{
 		// The user-application linker script, user/user.ld,
 		// puts information about the application's stabs (equivalent
 		// to __STAB_BEGIN__, __STAB_END__, __STABSTR_BEGIN__, and
@@ -142,10 +145,7 @@ debuginfo_eip(uintptr_t addr, struct Eipdebuginfo *info)
 		// Make sure this memory is valid.
 		// Return -1 if it is not.  Hint: Call user_mem_check.
 		// LAB 3: Your code here.
-		if (user_mem_check(curenv, usd, sizeof(struct UserStabData), PTE_U) < 1) 
-		{
-			return -1;
-		}
+		if (user_mem_check(curenv, usd, sizeof(struct UserStabData), PTE_U) < 1) return -1;
 		stabs = usd->stabs;
 		stab_end = usd->stab_end;
 		stabstr = usd->stabstr;
@@ -153,14 +153,10 @@ debuginfo_eip(uintptr_t addr, struct Eipdebuginfo *info)
 
 		// Make sure the STABS and string table memory is valid.
 		// LAB 3: Your code here.
-		if (user_mem_check(curenv, stabs, stab_end - stabs, PTE_U) < 1) 
-		{
-			return -1;
-		}
-		if (user_mem_check(curenv, stabstr, stabstr_end - stabstr, PTE_U) < 1) 
-		{
-			return -1;
-		}
+		if (user_mem_check(curenv, stabs, stab_end - stabs, PTE_U) < 1) return -1;
+		
+		if (user_mem_check(curenv, stabstr, stabstr_end - stabstr, PTE_U) < 1) return -1;
+		
 
 	}
 

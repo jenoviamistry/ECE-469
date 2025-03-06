@@ -200,78 +200,63 @@ trap_dispatch(struct Trapframe *tf)
 {
 	// Handle processor exceptions.
 	// LAB 3: Your code here.
-	    // 1. Page fault
-		if (tf->tf_trapno == T_PGFLT) {
-			page_fault_handler(tf);
-			return;
-		}
+	// page fault
+	if (tf->tf_trapno == T_PGFLT) 
+	{
+		page_fault_handler(tf);
+		return;
+	}
+	if (tf->tf_trapno == T_BRKPT)  // breakpoint 
+	{
+		monitor(tf);
+		return;
+	}
+	if (tf->tf_trapno == T_SYSCALL) 	// syscall
+	{ 
+		tf->tf_regs.reg_eax = syscall(tf->tf_regs.reg_eax,
+									tf->tf_regs.reg_edx, tf->tf_regs.reg_ecx,
+									tf->tf_regs.reg_ebx, tf->tf_regs.reg_edi, tf->tf_regs.reg_esi);
+		env_pop_tf(tf);
+	}
 	
-		// 2. Breakpoint => kernel monitor
-		if (tf->tf_trapno == T_BRKPT) {
-			monitor(tf);
-			return;
-		}
+	if (tf->tf_trapno == T_DIVIDE) // div error 
+	{
+		cprintf("Handling divide error for the environment %08x\n", curenv->env_id);
+		print_trapframe(tf);
+		env_destroy(curenv);
+		return;
+	}
 	
-		// 3. Syscall
-		if (tf->tf_trapno == T_SYSCALL) {
-			tf->tf_regs.reg_eax = syscall(tf->tf_regs.reg_eax,
-										  tf->tf_regs.reg_edx,
-										  tf->tf_regs.reg_ecx,
-										  tf->tf_regs.reg_ebx,
-										  tf->tf_regs.reg_edi,
-										  tf->tf_regs.reg_esi);
-			env_pop_tf(tf);
-		}
-	
-		// 4. Example: T_DIVIDE
-		if (tf->tf_trapno == T_DIVIDE) {
-			cprintf("Handling divide error for environment %08x\n", curenv->env_id);
-			// Print the trap frame so the grader sees "trap 0x00000000 Divide error"
-			print_trapframe(tf);
-			// If from user mode, kill the env; else panic
-		//	if ((tf->tf_cs & 3) == 3)
-		//		panic("Divide error in kernel");
-		//	else
-			env_destroy(curenv);
-			return;
-		}
-	
-		// 5. Example: T_GPFLT
-		if (tf->tf_trapno == T_GPFLT) {
-			cprintf("General Protection Fault\n");
-			print_trapframe(tf);
-			if ((tf->tf_cs & 3) == 3)
-				env_destroy(curenv);
-			else
-				panic("GP fault in kernel");
-			return;
-		}
+	if (tf->tf_trapno == T_GPFLT) // gen protection fault
+	{
+		cprintf("General Protection Fault\n");
+		print_trapframe(tf);
+		if ((tf->tf_cs & 3) == 3) env_destroy(curenv);
+		else	panic("Gen protection fault in the kernel");
+		return;
+	}
 
-		if (tf->tf_trapno == T_FPERR) {
-			cprintf("x87 Floating-Point Error\n");
-			print_trapframe(tf);
-			if ((tf->tf_cs & 3) == 0)
-				panic("FPU error in kernel");
-			else
-				env_destroy(curenv);
-			return;
-		}
+	if (tf->tf_trapno == T_FPERR) // floating point fault
+	{
+		//cprintf("x87 Floating-Point Error\n");
+		print_trapframe(tf);
+		if ((tf->tf_cs & 3) == 0) panic("FPU error in kernel trap.c");
+		else env_destroy(curenv);
+		return;
+	}
 
-		if (tf->tf_trapno == T_DBLFLT) {
-			cprintf("Double Fault detected!\n");
-			print_trapframe(tf);
-			if ((tf->tf_cs & 3) == 3) {
-				env_destroy(curenv);
-			} else {
-				panic("Double Fault in kernel!");
-			}
-			return;
-		}
+	if (tf->tf_trapno == T_DBLFLT) // double fault
+	{
+		//cprintf("Double Fault detected!\n");
+		print_trapframe(tf);
+		if ((tf->tf_cs & 3) == 3) env_destroy(curenv);
+		else panic("Double fault in kernel trap.c");
 		
-	
+		return;
+	}
 
 	// Unexpected trap: The user process or the kernel has a bug.
-	cprintf("Unhandled trap: %d (%s)\n", tf->tf_trapno, trapname(tf->tf_trapno));
+	//cprintf("Unhandled trap: %d (%s)\n", tf->tf_trapno, trapname(tf->tf_trapno));
 
     print_trapframe(tf);
     if ((tf->tf_cs & 3) == 0)

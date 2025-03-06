@@ -325,7 +325,7 @@ page_init(void)
 	page_free_list = NULL;
 
 	// rest of memory is free or if in use skip
-	for (i = 1; i < npages; i++) 
+	for (i=1; i < npages; i++) 
 	{
 		// the page phys address
 		uintptr_t pages2 = i * PGSIZE;
@@ -408,11 +408,11 @@ page_free(struct PageInfo *pp)
 
 	if (pp->pp_ref) 
 	{
-		panic("page_free: pp_ref nonzero\n");
+		panic("pp_ref not zeroed in page free\n");
 	}
 	if (pp->pp_link) 
 	{
-		panic("page_free: pp_link not NULL\n");
+		panic("pp_link not NULL in page free\n");
 	}
 
 	pp->pp_link = page_free_list; // put the page at head of free list
@@ -460,13 +460,14 @@ pgdir_walk(pde_t *pgdir, const void *va, int create)
 	// Fill this function in
 	pde_t *pde = &pgdir[PDX(va)];
 
-    if (!(*pde & PTE_P)) { // Page Table doesn't exist
+    if (!(*pde & PTE_P)) // page table not null 
+	{ 
         if (!create) return NULL;
 
         struct PageInfo *new_pt = page_alloc(ALLOC_ZERO);
         if (!new_pt) return NULL;
 
-        new_pt->pp_ref++;  // Increment ref count for page table
+        new_pt->pp_ref++;  // inc ref count for page table
         *pde = page2pa(new_pt) | PTE_U | PTE_W | PTE_P;
     }
 
@@ -533,22 +534,15 @@ int
 page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm)
 {
 	// Fill this function in
-	pte_t *pte = pgdir_walk(pgdir, (void*)va, 1);
-	if (!pte) return -E_NO_MEM;
+	pte_t *p = pgdir_walk(pgdir, (void*)va, 1);
+	if (!p) return -E_NO_MEM;
 	pp->pp_ref++;
 	pp->pp_link = NULL;
-
-	if (*pte & PTE_P) 
-	{
-		page_remove(pgdir, va);
-	}
+	if (*p & PTE_P) page_remove(pgdir, va);
+	*p = page2pa(pp); // set pagetable to point to the phys addr
+	*p = *p | (perm | PTE_P);
+	pgdir[PDX(va)] = pgdir[PDX(va)] | (perm | PTE_P);
 	
-	// Setup the pagetable to point to this physical address
-	*pte = page2pa(pp);
-	
-	// Set pagetable and pagedir flags
-	*pte |= (perm|PTE_P);
-	pgdir[PDX(va)] |= (perm|PTE_P);
 	
 	return 0;
 	
@@ -652,68 +646,32 @@ int
 user_mem_check(struct Env *env, const void *va, size_t len, int perm)
 {
 	// LAB 3: Your code here.
-	/*void *cur = (void *)ROUNDDOWN(va, PGSIZE);
 
-	// Loop until we have checked all applicable pages
-	while (cur < ROUNDUP(va + len, PGSIZE)) 
+	void *check = (void *)ROUNDDOWN(va, PGSIZE);
+	uintptr_t end = ROUNDUP((uintptr_t)va + len, PGSIZE);
+
+	while ((uintptr_t)check < end)  // loop to check all pages
 	{
-		bool bad_access = false;
-
-		// Ensure address is below ULIM
-		if ((uint32_t)cur >= ULIM) 
+		bool faulty = false;
+  
+		if ((uint32_t)check >= ULIM)  // address less than ULIM
 		{
-			cprintf("Memory check failed at %p (above ULIM)\n", cur);
+			faulty = true;
+		}
 
-            user_mem_check_addr = (uint32_t) cur;
+		pte_t *pteVal = pgdir_walk(env->env_pgdir, check, false);
+	  	if (!pteVal || (*pteVal & (perm|PTE_P)) != (perm|PTE_P)) faulty = true;
+  
+		if (faulty) 
+		{
+			if (check < va) user_mem_check_addr = (uint32_t)va;
+			else user_mem_check_addr = (uint32_t)check;
 			return -E_FAULT;
-		}
-
-		// Ensure page table gives correct permissions
-		pte_t *pte = pgdir_walk(env->env_pgdir, cur, false);
-		if (!pte || (*pte & (perm|PTE_P)) != (perm|PTE_P)) 
-		{
-			cprintf("Memory check failed at %p (permissions)\n", cur);
-
-            user_mem_check_addr = (uint32_t) cur;
-            return -E_FAULT;
-		}
-
-		// Jump to next page
-		cur += PGSIZE;
+	  	}
+  
+		check += PGSIZE; // go to next page 
 	}
-
-	return 0;*/
-
-	void *cur = (void *)ROUNDDOWN(va, PGSIZE);
-
-	// Loop until we have checked all applicable pages
-	while (cur < ROUNDUP(va + len, PGSIZE)) {
-	  bool bad_access = false;
-  
-	  // Ensure address is below ULIM
-	  if ((uint32_t)cur >= ULIM) {
-		bad_access = true;
-	  }
-  
-	  // Ensure page table gives correct permissions
-	  pte_t *pte = pgdir_walk(env->env_pgdir, cur, false);
-	  if (!pte || (*pte & (perm|PTE_P)) != (perm|PTE_P)) {
-		bad_access = true;
-	  }
-  
-	  // If this access was bad, set user_mem_check_addr and return error
-	  if (bad_access) {
-		if (cur < va) {
-		  user_mem_check_addr = (uint32_t)va;
-		} else {
-		  user_mem_check_addr = (uint32_t)cur;
-		}
-		return -E_FAULT;
-	  }
-  
-	  // Jump to next page
-	  cur += PGSIZE;
-	}
+	
 	return 0;
 }
 
@@ -727,9 +685,9 @@ user_mem_check(struct Env *env, const void *va, size_t len, int perm)
 void
 user_mem_assert(struct Env *env, const void *va, size_t len, int perm)
 {
-	if (user_mem_check(env, va, len, perm | PTE_U) < 0) {
-		cprintf("[%08x] user_mem_check assertion failure for "
-			"va %08x\n", env->env_id, user_mem_check_addr);
+	if (user_mem_check(env, va, len, perm | PTE_U) < 0) 
+	{
+		cprintf("[%08x] user_mem_check assertion failure for va %08x\n", env->env_id, user_mem_check_addr);
 		env_destroy(env);	// may not return
 	}
 }
