@@ -1,0 +1,16 @@
+1. The purpose of having an individual handler function for each exception/interrupt
+is so the kernel can easily identify what interrupt/exception has occured, 
+and respond accordingly. Each exception/interrupt has different demands based on
+how to resolve the issue. For example, one interrupt may just print a statement
+while another may need to terminate the process. 
+
+2. I had to modify trap_dispatch() to make sure the user-space software that gives
+the invalid interrupt, instead triggers the general protection exception. 
+I specified a case for the general protection fault that kills the environment that
+causes the fault. If softint called int $14, the page fault handler would not run
+correctly since the page fault handler expects specific fields to act upon the problem.
+It may not correctly recover the environment after handling the fake page fault.
+It produces vector 13 instead because a page fault did not actually occurr, so the handler request
+is rejected from running.
+
+

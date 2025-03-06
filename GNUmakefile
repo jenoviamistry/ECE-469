@@ -66,7 +66,6 @@ endif
 # try to generate a unique GDB port
 GDBPORT	:= $(shell expr `id -u` % 5000 + 25000)
 
-CC	:= gcc -pipe
 CC	:= $(GCCPREFIX)gcc -pipe
 GDB	:= $(GCCPREFIX)gdb
 AS	:= $(GCCPREFIX)as
@@ -89,12 +88,7 @@ CFLAGS := $(CFLAGS) $(DEFS) $(LABDEFS) -O1 -fno-builtin -I$(TOP) -MD
 CFLAGS += -fno-omit-frame-pointer
 CFLAGS += -std=gnu99
 CFLAGS += -static
-CFLAGS += -Wall -Wno-format -Wno-unused -Werror -g -m32 -gstabs
-CFLAGS += -I/usr/include -I/usr/include/x86_64-linux-gnu
-CFLAGS += -I/usr/include/x86_64-linux-gnu
-CFLAGS += -g -gstabs
-QEMUFLAGS += -g 
-
+CFLAGS += -Wall -Wno-format -Wno-unused -Werror -gstabs -m32
 # -fno-tree-ch prevented gcc from sometimes reordering read_ebp() before
 # mon_backtrace()'s function prologue on gcc version: (Debian 4.7.2-5) 4.7.2
 CFLAGS += -fno-tree-ch
@@ -103,7 +97,7 @@ CFLAGS += -fno-tree-ch
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 
 # Common linker flags
-LDFLAGS := -m elf_i386 -g
+LDFLAGS := -m elf_i386
 
 # Linker flags for JOS user programs
 ULDFLAGS := -T user/user.ld
@@ -127,8 +121,8 @@ all:
 	   $(OBJDIR)/lib/%.o $(OBJDIR)/fs/%.o $(OBJDIR)/net/%.o \
 	   $(OBJDIR)/user/%.o
 
-KERN_CFLAGS := $(CFLAGS) -DJOS_KERNEL -g -gstabs
-USER_CFLAGS := $(CFLAGS) -DJOS_USER -g -gstabs
+KERN_CFLAGS := $(CFLAGS) -DJOS_KERNEL -gstabs
+USER_CFLAGS := $(CFLAGS) -DJOS_USER -gstabs
 
 # Update .vars.X if variable X has changed since the last make run.
 #

@@ -10,6 +10,8 @@
 #include <kern/kclock.h>
 #include <kern/env.h>
 #include <kern/trap.h>
+#include <inc/x86.h>
+
 
 /*
 // Test the stack backtrace function (lab 1 only)
@@ -34,12 +36,17 @@ i386_init(void)
 	// This ensures that all static/global variables start out zero.
 	memset(edata, 0, end - edata);
 
+	// disable the x87 so no real floating instructions can execute:
+	uint32_t cr0 = rcr0();
+	cr0 |= CR0_EM;       // CR0_EM == 0x4, the 'Emulation' bit
+	lcr0(cr0);
+
 	// Initialize the console.
 	// Can't call cprintf until after we do this!
 	cons_init();
 
-	cprintf("444544 decimal is %o octal!\n", 444544);
-   	cprintf("Octal test: %o\n", 12345); // Your test line
+	//cprintf("444544 decimal is %o octal!\n", 444544);
+   	//cprintf("Octal test: %o\n", 12345); // Your test line
 
 
 	// Lab 2 memory management initialization functions

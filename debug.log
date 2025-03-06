@@ -1,0 +1,37 @@
+qemu-system-i386 -nographic -drive file=obj/kern/kernel.img,index=0,media=disk,format=raw -serial mon:stdio -gdb tcp::25047 -D qemu.log 
+Physical memory: 131072K available, base = 640K, extended = 130432K
+check_page_free_list() succeeded!
+check_page_alloc() succeeded!
+check_page() succeeded!
+check_kern_pgdir() succeeded!
+check_page_free_list() succeeded!
+check_page_installed_pgdir() succeeded!
+[00000000] new env 00001000
+Switching to environment 00001000
+Incoming TRAP frame at 0xefffffc0
+Incoming TRAP frame at 0xefffffb0
+Unhandled trap: 8 (Double Fault)
+TRAP frame at 0xefffffb0
+  edi  0x00000000
+  esi  0x00000000
+  ebp  0xeebfdfd0
+  oesp 0xefffffd0
+  ebx  0x00000000
+  edx  0x00000000
+  ecx  0x00000000
+  eax  0x00001000
+  es   0x----0000
+  ds   0x----0000
+  trap 0x00000008 Double Fault
+  err  0x0000001b
+  eip  0x00000016
+  cs   0x----5fc6
+  flag 0x00000023
+  esp  0x0000ff53
+  ss   0x----ff53
+[00001000] free env 00001000
+Destroyed the only environment - nothing more to do!
+Welcome to the JOS kernel monitor!
+Type 'help' for a list of commands.
+K> QEMU: Terminated
+
