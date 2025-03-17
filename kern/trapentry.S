@@ -46,34 +46,32 @@
 /*
  * Lab 3: Your code here for generating entry points for the different traps.
  */
-TRAPHANDLER_NOEC(divide_handler, T_DIVIDE)
-TRAPHANDLER_NOEC(debug_handler, T_DEBUG)
-TRAPHANDLER_NOEC(nmi_handler, T_NMI)
-TRAPHANDLER_NOEC(brkpt_handler, T_BRKPT)
-TRAPHANDLER_NOEC(oflow_handler, T_OFLOW)  
-TRAPHANDLER_NOEC(bound_handler, T_BOUND)
-TRAPHANDLER_NOEC(illop_handler, T_ILLOP)
-TRAPHANDLER_NOEC(device_handler, T_DEVICE)
-TRAPHANDLER(dblflt_handler, T_DBLFLT)
-TRAPHANDLER(tss_handler, T_TSS)
-TRAPHANDLER(segnp_handler, T_SEGNP)
-TRAPHANDLER(stack_handler, T_STACK)
-TRAPHANDLER(gpflt_handler, T_GPFLT)
-TRAPHANDLER(pgflt_handler, T_PGFLT)
-TRAPHANDLER_NOEC(fperr_handler, T_FPERR)
-TRAPHANDLER_NOEC(align_handler, T_ALIGN)
-TRAPHANDLER_NOEC(mchk_handler, T_MCHK)
-TRAPHANDLER_NOEC(simderr_handler, T_SIMDERR)
-TRAPHANDLER(syscall_handler, T_SYSCALL)
-TRAPHANDLER_NOEC(t_default, T_DEFAULT)
 
+TRAPHANDLER_NOEC(t_divide, T_DIVIDE);    // 0
+TRAPHANDLER_NOEC(t_debug, T_DEBUG);      // 1
+TRAPHANDLER_NOEC(t_nmi, T_NMI);          // 2
+TRAPHANDLER_NOEC(t_brkpt, T_BRKPT);      // 3
+TRAPHANDLER_NOEC(t_oflow, T_OFLOW);      // 4
+TRAPHANDLER_NOEC(t_bound, T_BOUND);      // 5
+TRAPHANDLER_NOEC(t_illop, T_ILLOP);      // 6
+TRAPHANDLER_NOEC(t_device, T_DEVICE);    // 7
 
-// HINT 1 : TRAPHANDLER_NOEC(t_divide, T_DIVIDE);
-//          Do something like this if there is no error code for the trap
-// HINT 2 : TRAPHANDLER(t_dblflt, T_DBLFLT);
-//          Do something like this if the trap includes an error code..
-// HINT 3 : READ Intel's manual to check if the trap includes an error code
-//          or not...
+TRAPHANDLER(t_dblflt, T_DBLFLT);    // 8
+
+TRAPHANDLER(t_tss, T_TSS);          // 10
+TRAPHANDLER(t_segnp, T_SEGNP);      // 11
+TRAPHANDLER(t_stack, T_STACK);      // 12
+TRAPHANDLER(t_gpflt, T_GPFLT);      // 13
+TRAPHANDLER(t_pgflt, T_PGFLT);      // 14
+
+TRAPHANDLER_NOEC(t_fperr, T_FPERR);      // 16
+
+TRAPHANDLER(t_align, T_ALIGN);      // 17
+
+TRAPHANDLER_NOEC(t_mchk, T_MCHK);        // 18
+TRAPHANDLER_NOEC(t_simderr, T_SIMDERR);  // 19
+
+TRAPHANDLER_NOEC(t_syscall, T_SYSCALL);  // 48, 0x30
 
 /*
  * Lab 3: Your code here for _alltraps
@@ -82,18 +80,14 @@ TRAPHANDLER_NOEC(t_default, T_DEFAULT)
 _alltraps:
     pushl %ds
     pushl %es
-	pushal
-    mov $GD_KD, %eax
-	mov %ax, %ds
-	mov %ax, %es
-	pushl %esp
-	call trap
-	# addl $4, %esp   
-	# popal          
-	# popl %es        
-	# popl %ds       
-	# addl $8, %esp   
-	# iret
+    pushal
 
+    movl $GD_KD, %eax
+    movw %ax, %ds
+    movw %ax, %es
+
+    pushl %esp
+
+    call trap
 
 
