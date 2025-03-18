@@ -1,0 +1,6 @@
+CompileFlags:
+  Remove: [-gstabs, -fno-tree-ch]  # Remove unsupported or unnecessary flags
+  Add: [-I./inc, -m32, -nostdinc, -fno-builtin, -g]  # Add essential flags
+  Add: [-stdlib=libc++, -I/usr/include/x86_64-linux-gnu]
+  Add: [-I/usr/include, -I/usr/include/x86_64-linux-gnu]
+
