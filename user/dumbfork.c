@@ -9,6 +9,8 @@ envid_t dumbfork(void);
 void
 umain(int argc, char **argv)
 {
+	cprintf("hello from dumbfork!\n");
+
 	envid_t who;
 	int i;
 
@@ -26,6 +28,8 @@ void
 duppage(envid_t dstenv, void *addr)
 {
 	int r;
+	cprintf("duppage: addr=%p\n", addr);
+
 
 	// This is NOT what you should do in your fork.
 	if ((r = sys_page_alloc(dstenv, addr, PTE_P|PTE_U|PTE_W)) < 0)
@@ -65,6 +69,8 @@ dumbfork(void)
 	// We're the parent.
 	// Eagerly copy our entire address space into the child.
 	// This is NOT what you should do in your fork implementation.
+	cprintf("DEBUG: &end = %08x\n", (uintptr_t)end);
+
 	for (addr = (uint8_t*) UTEXT; addr < end; addr += PGSIZE)
 		duppage(envid, addr);
 
@@ -74,6 +80,8 @@ dumbfork(void)
 	// Start the child environment running
 	if ((r = sys_env_set_status(envid, ENV_RUNNABLE)) < 0)
 		panic("sys_env_set_status: %e", r);
+	cprintf("DEBUG: &end = %08x\n", (uintptr_t)end);
+
 
 	return envid;
 }

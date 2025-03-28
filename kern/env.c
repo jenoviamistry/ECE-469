@@ -119,7 +119,7 @@ env_init(void)
 {
 	// Set up envs array
 	// LAB 3: Your code here.
-    memset(envs, 0, sizeof(struct Env) * NENV);
+	memset(envs, 0, sizeof(struct Env) * NENV);
     env_free_list = NULL;
     for (int i=NENV-1; i>=0; --i) {
         envs[i].env_link = env_free_list;
@@ -216,6 +216,7 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 	int32_t generation;
 	int r;
 	struct Env *e;
+	cprintf("env_alloc: Allocating new environment for parent %08x\n", parent_id);
 
 	if (!(e = env_free_list))
 		return -E_NO_FREE_ENV;
@@ -259,6 +260,8 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 
 	// Enable interrupts while in user mode.
 	// LAB 4: Your code here.
+	e->env_tf.tf_eflags |= FL_IF;
+
 
 	// Clear the page fault handler until user installs one.
 	e->env_pgfault_upcall = 0;
@@ -267,10 +270,13 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 	e->env_ipc_recving = 0;
 
 	// commit the allocation
+
 	env_free_list = e->env_link;
 	*newenv_store = e;
 
 	cprintf("[%08x] new env %08x\n", curenv ? curenv->env_id : 0, e->env_id);
+	//cprintf(".%08x. new env %08x\n", curenv ? curenv->env_id : 0, e->env_id);
+
 	return 0;
 }
 
@@ -291,6 +297,7 @@ region_alloc(struct Env *e, void *va, size_t len)
 	//   'va' and 'len' values that are not page-aligned.
 	//   You should round va down, and round (va + len) up.
 	//   (Watch out for corner-cases!)
+	cprintf("region_alloc: Allocating stack at %08x\n", USTACKTOP - PGSIZE);
 
     char *start_addr    = (char *) ROUNDDOWN(va, PGSIZE);
     char *end_addr      = (char *) ROUNDUP((char *)va + len, PGSIZE);
@@ -302,10 +309,10 @@ region_alloc(struct Env *e, void *va, size_t len)
     while (start_addr < end_addr) {
         struct PageInfo *pp = page_lookup(e->env_pgdir, start_addr, NULL);
 
-        if (pp != NULL) {
-            start_addr += PGSIZE;
-            continue;
-        }
+        // if (pp != NULL) {
+        //     start_addr += PGSIZE;
+        //     continue;
+        // }
 
         pp = page_alloc(0);
 
@@ -374,26 +381,40 @@ load_icode(struct Env *e, uint8_t *binary)
 	//  What?  (See env_run() and env_pop_tf() below.)
 
 	// LAB 3: Your code here.
+
     uint32_t prev_cr3 = rcr3();
     lcr3(PADDR(e->env_pgdir));
+
     struct Proghdr *ph, *eph;
 
     struct Elf *elf = (struct Elf *) binary;
-
+	
     if (elf->e_magic != ELF_MAGIC) {
         panic("load_icode: not an ELF binary!\n");
     }
+	cprintf("ELF magic: %08x\n", elf->e_magic);
+	cprintf("ELF entry: %08x\n", elf->e_entry);
+
+	//cprintf("load_icode: entry point = %08x\n", e->env_tf.tf_eip);
+
+
 
     uintptr_t elf_base = (uintptr_t) elf;
 
     ph = (struct Proghdr *) (elf_base + elf->e_phoff);
     eph = ph + elf->e_phnum;
 
-    for (; ph < eph; ++ph) {
-        if (ph->p_type == ELF_PROG_LOAD) {
+    for (; ph < eph; ++ph) 
+	{
+		cprintf("Loading segment: va=%08x, filesz=%08x, memsz=%08x\n",
+			ph->p_va, ph->p_filesz, ph->p_memsz);
+
+        if (ph->p_type == ELF_PROG_LOAD) 
+		{
             region_alloc(e, (void *)ph->p_va, ph->p_memsz);
             memset((void *)ph->p_va, 0, ph->p_memsz);
-	    if (ph->p_memsz < ph->p_filesz) {
+	    	if (ph->p_memsz < ph->p_filesz) 
+			{
                 panic("load_icode: improperly formed ELF file!\n");   
             }
             memcpy((void *)ph->p_va, (void *)(elf_base + ph->p_offset), ph->p_filesz);
@@ -401,12 +422,15 @@ load_icode(struct Env *e, uint8_t *binary)
     }
 
     e->env_tf.tf_eip = elf->e_entry;
+	cprintf("load_icode: set tf_eip = %08x\n", e->env_tf.tf_eip);
+
 
 	// Now map one page for the program's initial stack
 	// at virtual address USTACKTOP - PGSIZE.
 
 	// LAB 3: Your code here.
     region_alloc(e, (void *)(USTACKTOP-PGSIZE), PGSIZE);
+	//region_alloc(e, (void *)(USTACKTOP-2*PGSIZE), 2*PGSIZE);
 
     e->env_tf.tf_esp = USTACKTOP;
 
@@ -464,7 +488,9 @@ env_free(struct Env *e)
 
 	// Flush all mapped pages in the user portion of the address space
 	static_assert(UTOP % PTSIZE == 0);
-	for (pdeno = 0; pdeno < PDX(UTOP); pdeno++) {
+
+	for (pdeno = 0; pdeno < PDX(UTOP); pdeno++) 
+	{
 
 		// only look at mapped page tables
 		if (!(e->env_pgdir[pdeno] & PTE_P))
@@ -572,20 +598,40 @@ env_run(struct Env *e)
 
 	// LAB 3: Your code here.
 
-    // 1.
-    if (curenv != NULL && curenv->env_status == ENV_RUNNING) {
-        curenv->env_status = ENV_RUNNABLE;
-    }
-    // 2.
-    curenv = e;
-    // 3.
-    curenv->env_status = ENV_RUNNING;
-    // 4.
-    curenv->env_runs += 1;
-    // 5.
-    lcr3(PADDR(e->env_pgdir));
+	// 1.
+	cprintf("env_run: Switching to env %08x - eip: %08x, esp: %08x\n",
+        e->env_id, e->env_tf.tf_eip, e->env_tf.tf_esp);
+	if (curenv != NULL && curenv->env_status == ENV_RUNNING) {
+		curenv->env_status = ENV_RUNNABLE;
+	}
+	// 2.
+	curenv = e;
+	// 3.
+	curenv->env_status = ENV_RUNNING;
+	// 4.
+	curenv->env_runs += 1;
+	// 5.
+	lcr3(PADDR(e->env_pgdir));
 
-    env_pop_tf(&curenv->env_tf);
+	unlock_kernel();
+
+	cprintf("env_run: TF dump before iret - eip: %08x esp: %08x cs: %x ds: %x ss: %x eflags: %x\n",
+        e->env_tf.tf_eip,
+        e->env_tf.tf_esp,
+        e->env_tf.tf_cs,
+        e->env_tf.tf_ds,
+        e->env_tf.tf_ss,
+        e->env_tf.tf_eflags);
+	
+
+	if ((e->env_tf.tf_cs & 3) != 3 || (e->env_tf.tf_ss & 3) != 3) {
+		panic("env_run: invalid segment selector: cs = %x, ss = %x", e->env_tf.tf_cs, e->env_tf.tf_ss);
+	}
+	if (e->env_tf.tf_esp >= UTOP || e->env_tf.tf_esp == 0) {
+		panic("env_run: invalid user esp = %08x", e->env_tf.tf_esp);
+	}
+		
+	env_pop_tf(&curenv->env_tf);
 	//panic("env_run not yet implemented");
 }
 

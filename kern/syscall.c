@@ -1,5 +1,6 @@
 /* See COPYRIGHT for copyright information. */
 
+
 #include <inc/x86.h>
 #include <inc/error.h>
 #include <inc/string.h>
@@ -11,6 +12,7 @@
 #include <kern/syscall.h>
 #include <kern/console.h>
 #include <kern/sched.h>
+
 
 // Print a string to the system console.
 // The string is exactly 'len' characters long.
@@ -51,18 +53,19 @@ sys_getenvid(void)
 static int
 sys_env_destroy(envid_t envid)
 {
-	int r;
-	struct Env *e;
+	int ret;
+	struct Env *env;
 
-	if ((r = envid2env(envid, &e, 1)) < 0)
-		return r;
-	if (e == curenv)
+	if ((ret = envid2env(envid, &env, 1)) < 0)
+		return ret;
+	if (env == curenv)
 		cprintf("[%08x] exiting gracefully\n", curenv->env_id);
 	else
-		cprintf("[%08x] destroying %08x\n", curenv->env_id, e->env_id);
-	env_destroy(e);
+		cprintf("[%08x] destroying %08x\n", curenv->env_id, env->env_id);
+	env_destroy(env);
 	return 0;
 }
+
 
 // Deschedule current environment and pick a different one to run.
 static void
@@ -75,7 +78,7 @@ sys_yield(void)
 // Returns envid of new environment, or < 0 on error.  Errors are:
 //	-E_NO_FREE_ENV if no free environment is available.
 //	-E_NO_MEM on memory exhaustion.
-static envid_t
+envid_t
 sys_exofork(void)
 {
 	// Create the new environment with env_alloc(), from kern/env.c.
@@ -85,7 +88,57 @@ sys_exofork(void)
 	// will appear to return 0.
 
 	// LAB 4: Your code here.
-	panic("sys_exofork not implemented");
+	struct Env *childEnv = NULL;
+	
+	if (!curenv) {
+		panic("sys_exofork: curenv is NULL");
+	}
+
+	int r = env_alloc(&childEnv, curenv->env_id);
+	if (r < 0) return r;
+
+	cprintf("sys_exofork: Copying trap frame from parent %08x to child %08x\n",
+        curenv->env_id, childEnv->env_id);
+	
+		//childEnv->env_tf = *tf;
+	childEnv->env_tf = curenv->env_tf;
+
+
+	childEnv->env_tf.tf_regs.reg_eax = 0;
+	childEnv->env_status = ENV_NOT_RUNNABLE;
+	//childEnv->env_tf.tf_ds = GD_UD | 3;
+	//childEnv->env_tf.tf_es = GD_UD | 3;
+	//childEnv->env_tf.tf_ss = GD_UD | 3;
+	//childEnv->env_tf.tf_cs = GD_UT | 3;
+
+
+
+	cprintf("sys_exofork: Copying trap frame from parent %08x to child %08x\n",
+		curenv->env_id, childEnv->env_id);
+	cprintf("sys_exofork: New child env %08x created\n", childEnv->env_id);
+	cprintf("sys_exofork: Child trap frame - eip: %08x, esp: %08x, cs: %04x, ds: %04x, ss: %04x\n",
+		childEnv->env_tf.tf_eip, childEnv->env_tf.tf_esp,
+		childEnv->env_tf.tf_cs, childEnv->env_tf.tf_ds, childEnv->env_tf.tf_ss);
+	
+
+	cprintf("sys_exofork: parent returning envid %08x to caller\n", childEnv->env_id);
+	cprintf("sys_exofork: parent trapframe still intact? eip = %08x esp = %08x\n",
+        curenv->env_tf.tf_eip, curenv->env_tf.tf_esp);
+
+		cprintf("PARENT tf_eip: %08x\n", curenv->env_tf.tf_eip);
+		cprintf("CHILD tf_eip:  %08x\n", childEnv->env_tf.tf_eip);
+		
+		cprintf("CHILD eax:     %08x\n", childEnv->env_tf.tf_regs.reg_eax);
+		
+	cprintf("child tf_eip: %08x tf_cs: %x\n", 
+			childEnv->env_tf.tf_eip, childEnv->env_tf.tf_cs);
+		
+		
+	return childEnv->env_id;
+	
+
+
+	//panic("sys_exofork not implemented");
 }
 
 // Set envid's env_status to status, which must be ENV_RUNNABLE
@@ -105,7 +158,23 @@ sys_env_set_status(envid_t envid, int status)
 	// envid's status.
 
 	// LAB 4: Your code here.
-	panic("sys_env_set_status not implemented");
+	struct Env *env;
+	int ret = envid2env(envid, &env, true);
+	// if (ret < 0 || env->env_parent_id != curenv->env_id) 
+	// {
+	// 	return -E_BAD_ENV;
+	// }
+	// if (ret < 0 || env->env_parent_id != curenv->env_id) {
+	// 	return -E_BAD_ENV;
+	// }
+	if (env == NULL) return -E_BAD_ENV; // if env is NULL, it means the envid doesn't exist
+	
+	if (ret < 0) return ret;
+	if (status != ENV_NOT_RUNNABLE && status != ENV_RUNNABLE) return -E_INVAL;
+	env->env_status = status;
+	return 0;
+	
+	//panic("sys_env_set_status not implemented");
 }
 
 // Set the page fault upcall for 'envid' by modifying the corresponding struct
@@ -120,6 +189,7 @@ static int
 sys_env_set_pgfault_upcall(envid_t envid, void *func)
 {
 	// LAB 4: Your code here.
+
 	panic("sys_env_set_pgfault_upcall not implemented");
 }
 
@@ -150,7 +220,26 @@ sys_page_alloc(envid_t envid, void *va, int perm)
 	//   allocated!
 
 	// LAB 4: Your code here.
-	panic("sys_page_alloc not implemented");
+	struct Env *env = NULL;
+	int ret = envid2env(envid, &env, true);
+	if (ret<0) return ret;
+
+	//if ((uintptr_t)va >= UTOP || ROUNDDOWN(va, PGSIZE) != va) return -E_INVAL;
+	if ((uintptr_t)va >= UTOP) return -E_INVAL;
+	//if ((perm & (PTE_U | PTE_P)) != (PTE_U | PTE_P) || (perm & ~PTE_SYSCALL)) return -E_INVAL;
+	if ((perm & (PTE_U | PTE_P)) != (PTE_U | PTE_P)) return -E_INVAL;
+
+	struct PageInfo *page = page_alloc(ALLOC_ZERO);
+	if (!page) return -E_NO_MEM;
+	if ( (ret = page_insert(env->env_pgdir, page, va, perm)) < 0) 
+	{
+		cprintf("sys_page_alloc: page_insert failed with error %d, freeing page\n", ret);
+		page_free(page);
+		return ret;
+	}
+	return 0;
+	
+	//panic("sys_page_alloc not implemented");
 }
 
 // Map the page of memory at 'srcva' in srcenvid's address space
@@ -181,24 +270,137 @@ sys_page_map(envid_t srcenvid, void *srcva,
 	//   check the current permissions on the page.
 
 	// LAB 4: Your code here.
-	panic("sys_page_map not implemented");
+	// struct Env *srcenv;
+	// struct Env *dstenv;
+	// pte_t *pte;
+
+	// int ret = envid2env(srcenvid, &srcenv, true);
+	// if (ret < 0) return ret;
+	
+	// ret = envid2env(dstenvid, &dstenv, true);
+	// if (ret < 0) return ret;
+
+	// if ((uintptr_t)srcva >= UTOP || (srcva != ROUNDDOWN(srcva,PGSIZE))) return -E_INVAL;
+	// if ((uintptr_t)dstva >= UTOP || ROUNDUP(dstva, PGSIZE) != dstva) return -E_INVAL;
+    
+	// if ((perm & (PTE_U | PTE_P)) != (PTE_U | PTE_P)) return -E_INVAL;
+	// if (perm & ~PTE_SYSCALL) return -E_INVAL;
+	
+	// struct PageInfo *page = page_lookup(srcenv->env_pgdir, srcva, &pte);
+	
+	// cprintf("sys_page_map: srcva=%08x -> dstva=%08x | parent=%08x -> child=%08x\n",
+    //     srcva, dstva, srcenv->env_id, dstenv->env_id);
+	// cprintf("sys_page_map: perm=%08x, pte on src=%08x\n", perm, *pte);
+
+	// if (!page) 
+	// {     
+	// 	cprintf("sys_page_map: bad srcva %08x not mapped in env %08x\n", srcva, srcenv->env_id);
+
+	// 	cprintf("sys_page_map: No page found at srcva=%08x in env %08x\n",
+    //         (unsigned)srcva, srcenv->env_id);
+	// 		return -E_INVAL;
+	// }
+	
+	// cprintf("sys_page_map: Found page at srcva=%08x in env %08x with *pte = %08x\n",
+    //     (unsigned)srcva, srcenv->env_id, *pte);
+
+	// if ((perm & PTE_W) && !(*pte & PTE_W)) {
+	// 	cprintf("sys_page_map: Invalid attempt to map read-only page as writable\n");
+	// 	return -E_INVAL;
+	// }
+	
+	// cprintf("sys_page_map: Mapping page from env %08x (va %08x) to env %08x (va %08x) with perm %08x\n",
+    //     srcenv->env_id, (unsigned)srcva, dstenv->env_id, (unsigned)dstva, perm);
+
+	// ret = page_insert(dstenv->env_pgdir, page, dstva, perm);
+	// //ret = page_insert(dstenv->env_pgdir, page, dstva, perm);
+	// if (ret < 0) return ret;
+
+
+	// return 0;
+
+
+		struct Env *srcenv;
+		struct Env *dstenv;
+		pte_t *pte;
+		pte_t *srcpte;
+		pte_t *dstpte;
+
+		int ret = envid2env(srcenvid, &srcenv, true);
+		if (ret < 0) return ret;
+		
+		ret = envid2env(dstenvid, &dstenv, true);
+		if (ret < 0) return ret;
+
+		if ((uintptr_t)srcva >= UTOP || (srcva != ROUNDDOWN(srcva,PGSIZE))) return -E_INVAL;
+		if ((uintptr_t)dstva >= UTOP || ROUNDUP(dstva, PGSIZE) != dstva) return -E_INVAL;
+		
+		if ((perm & (PTE_U | PTE_P)) != (PTE_U | PTE_P)) return -E_INVAL;
+		if (perm & ~PTE_SYSCALL) return -E_INVAL;
+		
+		//struct PageInfo *page = page_lookup(srcenv->env_pgdir, srcva, &pte);
+		struct PageInfo *page1 = page_lookup(srcenv->env_pgdir, srcva, &srcpte);
+		struct PageInfo *page2 = page_lookup(dstenv->env_pgdir, dstva, &dstpte);
+		if (page2 == NULL) 
+		{
+			dstpte = pgdir_walk(dstenv->env_pgdir, dstva , 1);
+			if (dstpte == NULL) return -E_NO_MEM; // if dstpte is NULL, it means we cannot allocate a page table for dstva
+		}
+
+		
+
+		cprintf("sys_page_map: srcva=%08x -> dstva=%08x | parent=%08x -> child=%08x\n",
+			srcva, dstva, srcenv->env_id, dstenv->env_id);
+		//cprintf("sys_page_map: perm=%08x, pte on src=%08x\n", perm, *pte);
+
+		
+		//cprintf("sys_page_map: Found page at srcva=%08x in env %08x with *pte = %08x\n",
+		//	(unsigned)srcva, srcenv->env_id, *pte);
+
+		if ((perm & PTE_W) && !(*srcpte & PTE_W)) {
+			cprintf("sys_page_map: Invalid attempt to map read-only page as writable\n");
+			return -E_INVAL;
+		}
+		
+		cprintf("sys_page_map: Mapping page from env %08x (va %08x) to env %08x (va %08x) with perm %08x\n",
+			srcenv->env_id, (unsigned)srcva, dstenv->env_id, (unsigned)dstva, perm);
+
+		ret = page_insert(dstenv->env_pgdir, page1, dstva, perm);
+		//ret = page_insert(dstenv->env_pgdir, page, dstva, perm);
+		if (ret < 0) return ret;
+
+
+		return 0;
+
+	//panic("sys_page_map not implemented");
 }
 
 // Unmap the page of memory at 'va' in the address space of 'envid'.
 // If no page is mapped, the function silently succeeds.
 //
-// Return 0 on success, < 0 on error.  Errors are:
+// Return 0 on success, indicating the page was successfully unmapped or no page was mapped.
+// Return < 0 on error. Errors are:
 //	-E_BAD_ENV if environment envid doesn't currently exist,
 //		or the caller doesn't have permission to change envid.
 //	-E_INVAL if va >= UTOP, or va is not page-aligned.
 static int
 sys_page_unmap(envid_t envid, void *va)
 {
-	// Hint: This function is a wrapper around page_remove().
+    // Hint: This function is a wrapper around page_remove().
 
-	// LAB 4: Your code here.
-	panic("sys_page_unmap not implemented");
+
+    // LAB 4: Your code here.
+    struct Env *env;
+    int ret = envid2env(envid, &env, true);
+    if (ret < 0 ) return ret;
+    if ((uintptr_t)va >= UTOP || ROUNDDOWN(va,PGSIZE) != va) return -E_INVAL;
+    page_remove(env->env_pgdir, va);
+    return 0;
+
+
+    //panic("sys_page_unmap not implemented");
 }
+
 
 // Try to send 'value' to the target env 'envid'.
 // If srcva < UTOP, then also send page currently mapped at 'srcva',
@@ -264,6 +466,7 @@ sys_ipc_recv(void *dstva)
 	return 0;
 }
 
+
 // Dispatches to the correct kernel function, passing the arguments.
 int32_t
 syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, uint32_t a5)
@@ -271,29 +474,36 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 	// Call the function corresponding to the 'syscallno' parameter.
 	// Return any appropriate return value.
 	// LAB 3: Your code here.
-
-
-	switch (syscallno) {
-    case SYS_cputs:
-    {
-        sys_cputs((const char *)a1, (size_t) a2);
-        return 0;
-    }
-    case SYS_cgetc:
-    {
-        return sys_cgetc();
-    }
-    case SYS_getenvid:
-    {
-        return (int32_t) sys_getenvid();
-    }
-    case SYS_env_destroy:
-    {
-        return sys_env_destroy((envid_t) a1);
-    }
-	default:
-	    panic("syscall %d not implemented", syscallno);
-		return -E_INVAL;
+	///panic("syscall not implemented");
+	switch (syscallno) 
+	{
+		case SYS_cputs:
+			sys_cputs((const char *) a1, (size_t) a2);
+			return 0;
+		case SYS_cgetc:
+			return sys_cgetc();
+		case SYS_getenvid:
+			return sys_getenvid();
+		case SYS_env_destroy:
+			return sys_env_destroy((envid_t) a1);
+		case SYS_yield:
+			//cprintf("sys_yield called from env %08x\n", curenv->env_id);
+			sys_yield();
+			return 0;
+		case SYS_exofork:
+			return sys_exofork();
+		case SYS_env_set_status: 
+			return sys_env_set_status((envid_t) a1, (int)a2);
+		case SYS_page_alloc:
+			return sys_page_alloc((envid_t)a1, (void*)a2, (int)a3);
+		case SYS_page_map:
+			return sys_page_map((envid_t)a1, (void*)a2, (envid_t)a3, (void*)a4, (int)a5);
+		case SYS_page_unmap:
+			return sys_page_unmap((envid_t)a1, (void*)a2);
+		default:
+			return -E_INVAL;
 	}
 }
+
+
 
