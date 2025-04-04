@@ -68,8 +68,6 @@ duppage(envid_t envid, unsigned pn)
 	// LAB 4: Your code here.
 	void *addr = (void*)(pn * PGSIZE);
 	int perm = PTE_U | PTE_P;
-
-	if (uvpt[pn] & PTE_SHARE) return sys_page_map(0, addr, envid, addr, uvpt[pn]&PTE_SYSCALL); // just map with the same perm
 	
 	if (uvpt[pn] & (PTE_W | PTE_COW)) 
 	{
