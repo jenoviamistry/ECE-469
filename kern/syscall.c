@@ -310,12 +310,12 @@ sys_page_map(envid_t srcenvid, void *srcva,
 	struct PageInfo *page1 = page_lookup(srcenv->env_pgdir, srcva, &srcpte); // soruce page
 	
 	// unnecccesary check added when trying to fix dumbfork
-	struct PageInfo *page2 = page_lookup(dstenv->env_pgdir, dstva, &dstpte);
-	if (page2 == NULL) 
-	{
-		dstpte = pgdir_walk(dstenv->env_pgdir, dstva , 1);
-		if (dstpte == NULL) return -E_NO_MEM; // if dstpte is NULL it means we cannot allocate a page table for dstva
-	}
+	// struct PageInfo *page2 = page_lookup(dstenv->env_pgdir, dstva, &dstpte);
+	// if (page2 == NULL) 
+	// {
+	// 	dstpte = pgdir_walk(dstenv->env_pgdir, dstva , 1);
+	// 	if (dstpte == NULL) return -E_NO_MEM; // if dstpte is NULL it means we cannot allocate a page table for dstva
+	// }
 
 	//cprintf("sys_page_map: srcva=%08x -> dstva=%08x | parent=%08x -> child=%08x\n",
 	//srcva, dstva, srcenv->env_id, dstenv->env_id);
