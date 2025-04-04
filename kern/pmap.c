@@ -1,3 +1,4 @@
+// pmap.c 
 /* See COPYRIGHT for copyright information. */
 
 #include <inc/x86.h>
@@ -58,7 +59,6 @@ i386_detect_memory(void)
 		totalmem, basemem, totalmem - basemem);
 }
 
-
 // --------------------------------------------------------------
 // Set up memory mappings above UTOP.
 // --------------------------------------------------------------
@@ -113,12 +113,14 @@ boot_alloc(uint32_t n)
     uintptr_t next_nextfree = \
             (uintptr_t) ROUNDUP((char *)nextfree + n, PGSIZE);
 
-    if ( PADDR((void *)next_nextfree)/PGSIZE < npages ) {
+    if ( PADDR((void *)next_nextfree)/PGSIZE < npages ) 
+	{
         result = nextfree;
         nextfree = (char *)next_nextfree;
         return result;
     }
-    else {
+    else 
+	{
         panic("Out of memory");
     }
 
@@ -301,12 +303,9 @@ mem_init_mp(void)
 	
 	for (int i = 0; i < NCPU; i++)
 	{
-		uintptr_t vaStack = KSTACKTOP - (i * (KSTKSIZE + KSTKGAP));
+		uintptr_t vaStack = KSTACKTOP-(i*(KSTKSIZE + KSTKGAP));
 		boot_map_region(kern_pgdir, vaStack - KSTKSIZE, KSTKSIZE, PADDR(percpu_kstacks[i]), PTE_W | PTE_P);
 	}
-
-
-
 }
 
 // --------------------------------------------------------------
@@ -353,16 +352,19 @@ page_init(void)
 		page_free_list = &pages[i];
 	}
     */
+
 	page_free_list = 0;
-	size_t mpentry_pgnum = MPENTRY_PADDR / PGSIZE;
+	size_t mpentry_pgnum = MPENTRY_PADDR/PGSIZE;
+    physaddr_t free_ph = PADDR((void*)boot_alloc(0));
+    size_t free_ph_pgnum = PGNUM(free_ph);
+	size_t io_pgnum_start  = PGNUM(IOPHYSMEM);
+	size_t io_pgnum_end    = PGNUM(EXTPHYSMEM);
 
-
-    physaddr_t free_phy = PADDR((void *)boot_alloc(0));
-    size_t free_phy_pgnum = PGNUM(free_phy);
     //cprintf("Free phy %p free_phy_pgnum %d\n", free_phy, free_phy_pgnum);
-    for (int i=0; i<npages; ++i) 
+
+    for (int i = 0; i<npages; ++i) 
 	{
-        if (i == 0 || ( i >= PGNUM(IOPHYSMEM) && i < free_phy_pgnum ) || (i == MPENTRY_PADDR / PGSIZE) || (i >= IOPHYSMEM / PGSIZE && i < EXTPHYSMEM / PGSIZE) ) 
+        if (i == 0 || ( i >= io_pgnum_start && i < free_ph_pgnum ) || (i == MPENTRY_PADDR/PGSIZE) || (i >= IOPHYSMEM/PGSIZE && i < EXTPHYSMEM/PGSIZE) ) 
 		{
             pages[i].pp_link = NULL;
             pages[i].pp_ref = 1;
@@ -401,7 +403,8 @@ page_alloc(int alloc_flags)
     struct PageInfo *ret = page_free_list;
     page_free_list = ret->pp_link;
     ret->pp_link = NULL;
-    if (alloc_flags & ALLOC_ZERO) {
+    if (alloc_flags & ALLOC_ZERO) 
+	{
         char *p = page2kva(ret);
         memset(p, 0, PGSIZE);
     }
@@ -436,6 +439,7 @@ page_free(struct PageInfo *pp)
 void
 page_decref(struct PageInfo* pp)
 {
+
 	if (--pp->pp_ref == 0)
 		page_free(pp);
 }
@@ -473,7 +477,8 @@ pgdir_walk(pde_t *pgdir, const void *va, int create)
         if (create) {
             // create, initialize!
             struct PageInfo *pp = page_alloc(ALLOC_ZERO);
-            if (pp == NULL) {
+            if (pp == NULL) 
+			{
                 // not enough memory
                 return NULL;
             }
@@ -687,10 +692,11 @@ mmio_map_region(physaddr_t pa, size_t size)
 	// Hint: The staff solution uses boot_map_region.
 	//
 	// Your code here:
-	if (base + ROUNDUP(size, PGSIZE) > MMIOLIM) panic("Reservation will overflow MMIOLIM");
-	boot_map_region(kern_pgdir, base, ROUNDUP(size,PGSIZE), pa, PTE_W|PTE_PCD|PTE_PWT);
+	if (ROUNDUP(size, PGSIZE) > MMIOLIM-base) panic("Overflow of MMIOLIM");
+	boot_map_region(kern_pgdir, base, ROUNDUP(size,PGSIZE), pa, PTE_W|PTE_PWT|PTE_PCD);
 	void *copyBase = (void*)base;
-	base += ROUNDUP(size, PGSIZE);
+	base = base + ROUNDUP(size, PGSIZE);
+	
 	return copyBase;
 
 	//panic("mmio_map_region not implemented");
@@ -717,9 +723,11 @@ static uintptr_t user_mem_check_addr;
 // and -E_FAULT otherwise.
 //
 int
-do_user_mem_check(struct Env *env, uintptr_t va, int perm) {
+do_user_mem_check(struct Env *env, uintptr_t va, int perm) 
+{
     pte_t *p_pte = pgdir_walk(env->env_pgdir, (void *)va, 0);
-    if ( p_pte == NULL || (*p_pte & (perm|PTE_P)) != (perm|PTE_P)) {
+    if ( p_pte == NULL || (*p_pte & (perm|PTE_P)) != (perm|PTE_P)) 
+	{
         return -E_FAULT;
     }
     return 0;

@@ -1,0 +1,19 @@
+1. MPBOOTPHYS is needed in mpentry.S to make sure that it runs 
+at the proper physical address it needs to be loaded at. It needs to compute
+the correct physical address for the symbols linked since it is not executed from the kernels address space. 
+Boot.S doesn't need it because the address it is loaded at should already be the same 
+as the linked physical address. While, mpentry.S does not automatically
+have the load address the same as the link address because it is loaded at a different address in the kernel.
+
+2. Kernel stacks need to be seperated for each CPU as an interrupt could arise 
+at any chance in any of the cpus. If they share a big stack, error messages can get garbled 
+and confused because of overwriting on the same stack.
+
+3. The pointer e can be dereferenced both before and after the addressing switch 
+because the kernel has the physical and virtual address mapped to each other over all of the address spaces. Therefore,
+e won't get confused and still map the same even after the switch.
+
+4. When the kernel switches from one environment to another, the old environment's 
+registers are saved so that the environment correctly resumes execution where it left off.
+This happens in env.c, in env_run the environment saves its trapframe before the switch
+to the new environment with env_pop_tf.  

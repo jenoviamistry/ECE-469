@@ -232,7 +232,7 @@ debuginfo_eip(uintptr_t addr, struct Eipdebuginfo *info)
 	}
 	else 
 	{
-		cprintf("No line number found for address %08x\n", addr);
+		//cprintf("No line number found for address %08x\n", addr);
 		info->eip_line = 0; // Default to 0 if no line number is found
 		return -1;
 	}

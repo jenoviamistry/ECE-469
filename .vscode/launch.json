@@ -1,42 +1,34 @@
-// {
-//     "version": "0.2.0",
-//     "configurations": [
-//         {
-//             "name": "(gdb) Attach to JOS Kernel",
-//             "type": "cppdbg",
-//             "request": "launch",
-//             "program": "${workspaceFolder}/obj/kern/kernel.img",
-//             "MIMode": "gdb",
-//             "miDebuggerServerAddress": "localhost:25047",
-//             "miDebuggerPath": "/usr/bin/gdb",
-//             "setupCommands": [
-//                 { "text": "target remote localhost:25047", "description": "Attach to GDB", "ignoreFailures": false }
-//             ],
-//             "logging": { "trace": true, "traceResponse": true, "engineLogging": true }
-//         }
-//     ]
-// }
 {
-    "version": "0.2.0",
-    "configurations": [
+  "version": "0.2.0",
+  "configurations": [
       {
-        "name": "(gdb) Attach to JOS Kernel",
-        "type": "cppdbg",
-        "request": "launch",
-        "program": "${workspaceFolder}/obj/kern/kernel.img",
-        "MIMode": "gdb",
-        "miDebuggerServerAddress": "localhost:25047",
-        "miDebuggerPath": "/usr/bin/gdb",
-        "setupCommands": [
-          { "text": "target remote localhost:25047", "description": "Attach to GDB", "ignoreFailures": false }
-        ],
-        "preLaunchTask": "build",  // Ensure this matches the task label in tasks.json
-        "logging": {
-          "trace": true,
-          "traceResponse": true,
-          "engineLogging": true
-        }
+          "name": "(gdb) Attach to JOS Kernel",
+          "type": "cppdbg",
+          "request": "launch",
+          "program": "${workspaceFolder}/obj/kern/kernel.img", // Path to your kernel image
+          "MIMode": "gdb",
+          "miDebuggerServerAddress": "localhost:${input:gdbPort}", // Dynamically assigned GDB port
+          "miDebuggerPath": "/usr/bin/gdb", // Path to GDB
+          "setupCommands": [
+              { "text": "target remote localhost:${input:gdbPort}", "description": "Attach to QEMU GDB server", "ignoreFailures": false },
+              { "text": "symbol-file obj/kern/kernel" } // Load kernel symbols
+          ],
+          "logging": {
+              "trace": true,
+              "traceResponse": true,
+              "engineLogging": true
+          },
+          "stopAtEntry": true, // Stop at the kernel entry point
+          "cwd": "${workspaceFolder}", // Set the working directory
+          "externalConsole": false // Use the VS Code integrated terminal
       }
-    ]
-  }
-  
+  ],
+  "inputs": [
+      {
+          "id": "gdbPort",
+          "type": "command",
+          "command": "workbench.action.tasks.runTask",
+          "args": "Get GDB Port",
+      }
+  ]
+}

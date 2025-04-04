@@ -1,3 +1,4 @@
+// init.c 
 /* See COPYRIGHT for copyright information. */
 
 #include <inc/stdio.h>
@@ -28,9 +29,9 @@ i386_init(void)
 	memset(edata, 0, end - edata);
 
 	// disable the x87 so no real floating instructions can execute:
-	uint32_t cr0 = rcr0();
-	cr0 |= CR0_EM;       // CR0_EM == 0x4, the 'Emulation' bit
-	lcr0(cr0);
+	//uint32_t cr0 = rcr0();
+	//cr0 |= CR0_EM;       // CR0_EM == 0x4, the 'Emulation' bit
+	//lcr0(cr0);
 
 	// Initialize the console.
 	// Can't call cprintf until after we do this!
@@ -73,6 +74,10 @@ i386_init(void)
 #else
 	// Touch all you want.
 	// ENV_CREATE(user_primes, ENV_TYPE_USER);
+  ENV_CREATE(user_yield, ENV_TYPE_USER);
+  ENV_CREATE(user_yield, ENV_TYPE_USER);
+  ENV_CREATE(user_yield, ENV_TYPE_USER);
+
 #endif // TEST*
 
 	// Schedule and run the first user environment!
