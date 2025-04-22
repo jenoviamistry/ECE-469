@@ -1,0 +1,384 @@
+make clean
+make[1]: Entering directory '/home/shay/a/jdmistry/jos'
+rm -rf obj .gdbinit jos.in qemu.log
+make[1]: Leaving directory '/home/shay/a/jdmistry/jos'
+./grade-lab4 
+make[1]: Entering directory '/home/shay/a/jdmistry/jos'
++ as kern/entry.S
++ cc kern/entrypgdir.c
++ cc kern/init.c
++ cc kern/console.c
++ cc kern/monitor.c
++ cc kern/pmap.c
++ cc kern/env.c
++ cc kern/kclock.c
++ cc kern/picirq.c
++ cc kern/printf.c
++ cc kern/trap.c
++ as kern/trapentry.S
++ cc kern/sched.c
++ cc kern/syscall.c
++ cc kern/kdebug.c
++ cc lib/printfmt.c
++ cc lib/readline.c
++ cc lib/string.c
++ as kern/mpentry.S
++ cc kern/mpconfig.c
++ cc kern/lapic.c
++ cc kern/spinlock.c
++ cc[USER] lib/console.c
++ cc[USER] lib/libmain.c
++ cc[USER] lib/exit.c
++ cc[USER] lib/panic.c
++ cc[USER] lib/printf.c
++ cc[USER] lib/printfmt.c
++ cc[USER] lib/readline.c
++ cc[USER] lib/string.c
++ cc[USER] lib/syscall.c
++ cc[USER] lib/pgfault.c
++ as[USER] lib/pfentry.S
++ cc[USER] lib/fork.c
++ cc[USER] lib/ipc.c
++ ar obj/lib/libjos.a
++ cc[USER] user/hello.c
++ as[USER] lib/entry.S
++ ld obj/user/hello
++ cc[USER] user/buggyhello.c
++ ld obj/user/buggyhello
++ cc[USER] user/buggyhello2.c
++ ld obj/user/buggyhello2
++ cc[USER] user/evilhello.c
++ ld obj/user/evilhello
++ cc[USER] user/testbss.c
++ ld obj/user/testbss
++ cc[USER] user/divzero.c
++ ld obj/user/divzero
++ cc[USER] user/breakpoint.c
++ ld obj/user/breakpoint
++ cc[USER] user/softint.c
++ ld obj/user/softint
++ cc[USER] user/badsegment.c
++ ld obj/user/badsegment
++ cc[USER] user/faultread.c
++ ld obj/user/faultread
++ cc[USER] user/faultreadkernel.c
++ ld obj/user/faultreadkernel
++ cc[USER] user/faultwrite.c
++ ld obj/user/faultwrite
++ cc[USER] user/faultwritekernel.c
++ ld obj/user/faultwritekernel
++ cc[USER] user/idle.c
++ ld obj/user/idle
++ cc[USER] user/yield.c
++ ld obj/user/yield
++ cc[USER] user/dumbfork.c
++ ld obj/user/dumbfork
++ cc[USER] user/stresssched.c
++ ld obj/user/stresssched
++ cc[USER] user/faultdie.c
++ ld obj/user/faultdie
++ cc[USER] user/faultregs.c
++ ld obj/user/faultregs
++ cc[USER] user/faultalloc.c
++ ld obj/user/faultalloc
++ cc[USER] user/faultallocbad.c
++ ld obj/user/faultallocbad
++ cc[USER] user/faultnostack.c
++ ld obj/user/faultnostack
++ cc[USER] user/faultbadhandler.c
++ ld obj/user/faultbadhandler
++ cc[USER] user/faultevilhandler.c
++ ld obj/user/faultevilhandler
++ cc[USER] user/forktree.c
++ ld obj/user/forktree
++ cc[USER] user/sendpage.c
++ ld obj/user/sendpage
++ cc[USER] user/spin.c
++ ld obj/user/spin
++ cc[USER] user/fairness.c
++ ld obj/user/fairness
++ cc[USER] user/pingpong.c
++ ld obj/user/pingpong
++ cc[USER] user/pingpongs.c
++ ld obj/user/pingpongs
++ cc[USER] user/primes.c
++ ld obj/user/primes
++ cc[USER] user/ipcstress.c
++ ld obj/user/ipcstress
++ cc[USER] user/recursivefork.c
++ ld obj/user/recursivefork
++ ld obj/kern/kernel
++ as boot/boot.S
++ cc -Os boot/main.c
++ ld boot/boot
++ mk obj/kern/kernel.img
+make[1]: Leaving directory '/home/shay/a/jdmistry/jos'
+dumbfork: FAIL (1.1s) 
+    AssertionError: ...
+         Physical memory: 131072K available, base = 640K, extended = 130432K
+         kernel panic on CPU 0 at kern/pmap.c:801: assertion failed: page2pa(pp) != MPENTRY_PADDR
+         Welcome to the JOS kernel monitor!
+         Type 'help' for a list of commands.
+         qemu-system-i386: terminating on signal 15 from pid 3751739 (make)
+    MISSING '.00000000. new env 00001000'
+    MISSING '.00001000. new env 00001001'
+    MISSING '0: I am the parent.'
+    MISSING '9: I am the parent.'
+    MISSING '0: I am the child.'
+    MISSING '9: I am the child.'
+    MISSING '19: I am the child.'
+    MISSING '.00001000. exiting gracefully'
+    MISSING '.00001000. free env 00001000'
+    MISSING '.00001001. exiting gracefully'
+    MISSING '.00001001. free env 00001001'
+    
+    QEMU output saved to jos.out.dumbfork
+Part A score: 0/5
+
+faultread: FAIL (0.9s) 
+    AssertionError: ...
+         Physical memory: 131072K available, base = 640K, extended = 130432K
+         kernel panic on CPU 0 at kern/pmap.c:801: assertion failed: page2pa(pp) != MPENTRY_PADDR
+         Welcome to the JOS kernel monitor!
+         Type 'help' for a list of commands.
+         qemu-system-i386: terminating on signal 15 from pid 3752272 (make)
+    MISSING '.00001000. user fault va 00000000 ip 008.....'
+    MISSING 'TRAP frame at 0xf....... from CPU .'
+    MISSING '  trap 0x0000000e Page Fault'
+    MISSING '  err  0x00000004.*'
+    MISSING '.00001000. free env 00001000'
+    
+    QEMU output saved to jos.out.faultread
+faultwrite: FAIL (1.0s) 
+    AssertionError: ...
+         Physical memory: 131072K available, base = 640K, extended = 130432K
+         kernel panic on CPU 0 at kern/pmap.c:801: assertion failed: page2pa(pp) != MPENTRY_PADDR
+         Welcome to the JOS kernel monitor!
+         Type 'help' for a list of commands.
+         qemu-system-i386: terminating on signal 15 from pid 3753027 (make)
+    MISSING '.00001000. user fault va 00000000 ip 008.....'
+    MISSING 'TRAP frame at 0xf....... from CPU .'
+    MISSING '  trap 0x0000000e Page Fault'
+    MISSING '  err  0x00000006.*'
+    MISSING '.00001000. free env 00001000'
+    
+    QEMU output saved to jos.out.faultwrite
+faultdie: FAIL (0.9s) 
+    AssertionError: ...
+         Physical memory: 131072K available, base = 640K, extended = 130432K
+         kernel panic on CPU 0 at kern/pmap.c:801: assertion failed: page2pa(pp) != MPENTRY_PADDR
+         Welcome to the JOS kernel monitor!
+         Type 'help' for a list of commands.
+         qemu-system-i386: terminating on signal 15 from pid 3753680 (make)
+    MISSING 'i faulted at va deadbeef, err 6'
+    MISSING '.00001000. exiting gracefully'
+    MISSING '.00001000. free env 00001000'
+    
+    QEMU output saved to jos.out.faultdie
+faultregs: FAIL (1.0s) 
+    AssertionError: ...
+         Physical memory: 131072K available, base = 640K, extended = 130432K
+         kernel panic on CPU 0 at kern/pmap.c:801: assertion failed: page2pa(pp) != MPENTRY_PADDR
+         Welcome to the JOS kernel monitor!
+         Type 'help' for a list of commands.
+         qemu-system-i386: terminating on signal 15 from pid 3754399 (make)
+    MISSING 'Registers in UTrapframe OK'
+    MISSING 'Registers after page-fault OK'
+    
+    QEMU output saved to jos.out.faultregs
+faultalloc: FAIL (1.0s) 
+    AssertionError: ...
+         Physical memory: 131072K available, base = 640K, extended = 130432K
+         kernel panic on CPU 0 at kern/pmap.c:801: assertion failed: page2pa(pp) != MPENTRY_PADDR
+         Welcome to the JOS kernel monitor!
+         Type 'help' for a list of commands.
+         qemu-system-i386: terminating on signal 15 from pid 3755315 (make)
+    MISSING 'fault deadbeef'
+    MISSING 'this string was faulted in at deadbeef'
+    MISSING 'fault cafebffe'
+    MISSING 'fault cafec000'
+    MISSING 'this string was faulted in at cafebffe'
+    MISSING '.00001000. exiting gracefully'
+    MISSING '.00001000. free env 00001000'
+    
+    QEMU output saved to jos.out.faultalloc
+faultallocbad: FAIL (1.0s) 
+    AssertionError: ...
+         Physical memory: 131072K available, base = 640K, extended = 130432K
+         kernel panic on CPU 0 at kern/pmap.c:801: assertion failed: page2pa(pp) != MPENTRY_PADDR
+         Welcome to the JOS kernel monitor!
+         Type 'help' for a list of commands.
+         qemu-system-i386: terminating on signal 15 from pid 3756009 (make)
+    MISSING '.00001000. user_mem_check assertion failure for va deadbeef'
+    MISSING '.00001000. free env 00001000'
+    
+    QEMU output saved to jos.out.faultallocbad
+faultnostack: FAIL (1.0s) 
+    AssertionError: ...
+         Physical memory: 131072K available, base = 640K, extended = 130432K
+         kernel panic on CPU 0 at kern/pmap.c:801: assertion failed: page2pa(pp) != MPENTRY_PADDR
+         Welcome to the JOS kernel monitor!
+         Type 'help' for a list of commands.
+         qemu-system-i386: terminating on signal 15 from pid 3756748 (make)
+    MISSING '.00001000. user_mem_check assertion failure for va eebfff..'
+    MISSING '.00001000. free env 00001000'
+    
+    QEMU output saved to jos.out.faultnostack
+faultbadhandler: FAIL (1.0s) 
+    AssertionError: ...
+         Physical memory: 131072K available, base = 640K, extended = 130432K
+         kernel panic on CPU 0 at kern/pmap.c:801: assertion failed: page2pa(pp) != MPENTRY_PADDR
+         Welcome to the JOS kernel monitor!
+         Type 'help' for a list of commands.
+         qemu-system-i386: terminating on signal 15 from pid 3757443 (make)
+    MISSING '.00001000. user_mem_check assertion failure for va (deadb|eebfe)...'
+    MISSING '.00001000. free env 00001000'
+    
+    QEMU output saved to jos.out.faultbadhandler
+faultevilhandler: FAIL (1.0s) 
+    AssertionError: ...
+         Physical memory: 131072K available, base = 640K, extended = 130432K
+         kernel panic on CPU 0 at kern/pmap.c:801: assertion failed: page2pa(pp) != MPENTRY_PADDR
+         Welcome to the JOS kernel monitor!
+         Type 'help' for a list of commands.
+         qemu-system-i386: terminating on signal 15 from pid 3758138 (make)
+    MISSING '.00001000. user_mem_check assertion failure for va (f0100|eebfe)...'
+    MISSING '.00001000. free env 00001000'
+    
+    QEMU output saved to jos.out.faultevilhandler
+forktree: FAIL (1.0s) 
+    AssertionError: ...
+         Physical memory: 131072K available, base = 640K, extended = 130432K
+         kernel panic on CPU 0 at kern/pmap.c:801: assertion failed: page2pa(pp) != MPENTRY_PADDR
+         Welcome to the JOS kernel monitor!
+         Type 'help' for a list of commands.
+         qemu-system-i386: terminating on signal 15 from pid 3758979 (make)
+    MISSING '....: I am .0.'
+    MISSING '....: I am .1.'
+    MISSING '....: I am .000.'
+    MISSING '....: I am .100.'
+    MISSING '....: I am .110.'
+    MISSING '....: I am .111.'
+    MISSING '....: I am .011.'
+    MISSING '....: I am .001.'
+    MISSING '.00001000. exiting gracefully'
+    MISSING '.00001001. exiting gracefully'
+    MISSING '.0000200.. exiting gracefully'
+    MISSING '.0000200.. free env 0000200.'
+    
+    QEMU output saved to jos.out.forktree
+Part B score: 0/50
+
+spin: FAIL (1.0s) 
+    AssertionError: ...
+         Physical memory: 131072K available, base = 640K, extended = 130432K
+         kernel panic on CPU 0 at kern/pmap.c:801: assertion failed: page2pa(pp) != MPENTRY_PADDR
+         Welcome to the JOS kernel monitor!
+         Type 'help' for a list of commands.
+         qemu-system-i386: terminating on signal 15 from pid 3759649 (make)
+    MISSING '.00000000. new env 00001000'
+    MISSING 'I am the parent.  Forking the child...'
+    MISSING '.00001000. new env 00001001'
+    MISSING 'I am the parent.  Running the child...'
+    MISSING 'I am the child.  Spinning...'
+    MISSING 'I am the parent.  Killing the child...'
+    MISSING '.00001000. destroying 00001001'
+    MISSING '.00001000. free env 00001001'
+    MISSING '.00001000. exiting gracefully'
+    MISSING '.00001000. free env 00001000'
+    
+    QEMU output saved to jos.out.spin
+stresssched: FAIL (1.0s) 
+    AssertionError: ...
+         Physical memory: 131072K available, base = 640K, extended = 130432K
+         kernel panic on CPU 0 at kern/pmap.c:801: assertion failed: page2pa(pp) != MPENTRY_PADDR
+         Welcome to the JOS kernel monitor!
+         Type 'help' for a list of commands.
+         qemu-system-i386: terminating on signal 15 from pid 3760384 (make)
+    MISSING '.000010... stresssched on CPU 0'
+    MISSING '.000010... stresssched on CPU 1'
+    MISSING '.000010... stresssched on CPU 2'
+    MISSING '.000010... stresssched on CPU 3'
+    
+    QEMU output saved to jos.out.stresssched
+sendpage: FAIL (1.0s) 
+    AssertionError: ...
+         Physical memory: 131072K available, base = 640K, extended = 130432K
+         kernel panic on CPU 0 at kern/pmap.c:801: assertion failed: page2pa(pp) != MPENTRY_PADDR
+         Welcome to the JOS kernel monitor!
+         Type 'help' for a list of commands.
+         qemu-system-i386: terminating on signal 15 from pid 3761036 (make)
+    MISSING '.00000000. new env 00001000'
+    MISSING '.00000000. new env 00001000'
+    MISSING '.00001000. new env 00001001'
+    MISSING '1000 got message: hello child environment! how are you?'
+    MISSING 'child received correct message'
+    MISSING '1001 got message: hello parent environment! I'm good'
+    MISSING 'parent received correct message'
+    MISSING '.00001000. exiting gracefully'
+    MISSING '.00001000. free env 00001000'
+    MISSING '.00001001. exiting gracefully'
+    MISSING '.00001001. free env 00001001'
+    
+    QEMU output saved to jos.out.sendpage
+pingpong: FAIL (1.0s) 
+    AssertionError: ...
+         Physical memory: 131072K available, base = 640K, extended = 130432K
+         kernel panic on CPU 0 at kern/pmap.c:801: assertion failed: page2pa(pp) != MPENTRY_PADDR
+         Welcome to the JOS kernel monitor!
+         Type 'help' for a list of commands.
+         qemu-system-i386: terminating on signal 15 from pid 3761762 (make)
+    MISSING '.00000000. new env 00001000'
+    MISSING '.00001000. new env 00001001'
+    MISSING 'send 0 from 1000 to 1001'
+    MISSING '1001 got 0 from 1000'
+    MISSING '1000 got 1 from 1001'
+    MISSING '1001 got 8 from 1000'
+    MISSING '1000 got 9 from 1001'
+    MISSING '1001 got 10 from 1000'
+    MISSING '.00001000. exiting gracefully'
+    MISSING '.00001000. free env 00001000'
+    MISSING '.00001001. exiting gracefully'
+    MISSING '.00001001. free env 00001001'
+    
+    QEMU output saved to jos.out.pingpong
+primes: FAIL (1.0s) 
+    AssertionError: ...
+         444544 decimal is 1544200 octal!
+         Physical memory: 131072K available, base = 640K, extended = 130432K
+         kernel panic on CPU 0 at kern/pmap.c:801: assertion failed: page2pa(pp) != MPENTRY_PADDR
+         Welcome to the JOS kernel monitor!
+         Type 'qemu-system-i386: terminating on signal 15 from pid 3762617 (make)
+    MISSING '.00000000. new env 00001000'
+    MISSING '.00001000. new env 00001001'
+    MISSING 'CPU .: 2 .00001001. new env 00001002'
+    MISSING 'CPU .: 3 .00001002. new env 00001003'
+    MISSING 'CPU .: 5 .00001003. new env 00001004'
+    MISSING 'CPU .: 7 .00001004. new env 00001005'
+    MISSING 'CPU .: 11 .00001005. new env 00001006'
+    MISSING 'CPU .: 1877 .00001120. new env 00001121'
+    
+    QEMU output saved to jos.out.primes
+Part C score: 0/25
+
+recursivefork: FAIL (1.0s) 
+    AssertionError: ...
+         Physical memory: 131072K available, base = 640K, extended = 130432K
+         kernel panic on CPU 0 at kern/pmap.c:801: assertion failed: page2pa(pp) != MPENTRY_PADDR
+         Welcome to the JOS kernel monitor!
+         Type 'help' for a list of commands.
+         qemu-system-i386: terminating on signal 15 from pid 3763251 (make)
+    MISSING 'Hello from the other side'
+    
+    QEMU output saved to jos.out.recursivefork
+ipcstress: FAIL (1.0s) 
+    AssertionError: ...
+         Physical memory: 131072K available, base = 640K, extended = 130432K
+         kernel panic on CPU 0 at kern/pmap.c:801: assertion failed: page2pa(pp) != MPENTRY_PADDR
+         Welcome to the JOS kernel monitor!
+         Type 'help' for a list of commands.
+         qemu-system-i386: terminating on signal 15 from pid 3763975 (make)
+    MISSING 'Hello from the other side'
+    
+    QEMU output saved to jos.out.ipcstress
+Score: 0/90

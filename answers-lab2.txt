@@ -1,0 +1,41 @@
+a.
+ +-----+----------------------+---------------------------------------+
+    |Entry| Base Virtual Address |  Points to (logically)                |
+    +=====+======================+=======================================+
+    |1023 | 1023 x 0x40000000 = 0xFFC00000 | Page table for top 4MB of phys memory |
+    +-----+----------------------+---------------------------------------+
+    |1022 | 1022 x 0x40000000 = 0xFF800000 | Page table for phys addresses 0xF8000000 - 0xFBFFFFFF                                     
+    +-----+----------------------+---------------------------------------+
+    |.    | ?                    | Entries from 960-1023 map 4MB phys mem at a time                                     |
+    +-----+----------------------+---------------------------------------+
+    |960  | 0xF0000000           | Page table physical mapping address from 0x000000000 to 0x003FFFFF                                     |
+    +-----+----------------------+---------------------------------------+
+    |3 - 959| 0x00400000 to 0xEFBFFFF| unmapped                                     |
+    +-----+----------------------+---------------------------------------+
+    |2    | 0x00800000           | No mapping established in my code                                     |
+    +-----+----------------------+---------------------------------------+
+    |1    | 0x00400000           | No mapping estab.                                     |
+    +-----+----------------------+---------------------------------------+
+    |0    | 0x00000000           | [see next question]    The lowest 4MB               |
+    +-----+----------------------+---------------------------------------+
+
+    b. The user programs will not be user accessible because they dont have
+    the PTE_U user bit set. They are only marked with PTE_P and PTE_W in the kernel.
+    Since the user bit is checked on every memory access, any attempt by a user process to read or write 
+    will cause a page fault. The kernel memory is hidden from the user processes. In summary, 
+    the kernel is protected because the mappings are marked for supervising only. 
+
+    c. The amount of physical memory that the operating system supports is 256 MB. The only physical
+    addresses are from 0 to 0x0FFFFFFF. The boot map region is calculated as 
+    0xffffffff - 0xF0000000 + 1 =  0x10000000 = 256 MB from boot_map_region(kern_pgdir, KERNBASE, 0xffffffff - KERNBASE + 1, 0, PTE_W).
+    These addresses are mapped into the kernels virtual address space. 
+
+    d. If we had the maximum 256 MB of physical memory, it would be broken down by the page arrays, page directories, and page tables.
+    For a page array with struct PageInfo, the page size would be 4096 bytes, yielding 65 thousand plus pages. Each pageInfo struct is 8 bytes,
+    so the array uses approximately 500,000 bytes. The page directory is one page in size 4096 bytes.
+    The page tables are one page table per 4 MB, so that gives approximately 64 page tables. The total overhead for that would be 256 KB (64 x 4096).
+
+    e. The transition to running at an EIP above KERNBASE occurs when the boot code peforms a jump that reloads the code segment register
+    and selector with a base of KERNBASE. This jump relocates to the high address space. Initially, paging is with identity mapping so that the processor can execute low-address code,
+    but then the jump relocates execution into a higher virtual address space. This transition is necessary because the kernel is linked to high address
+    to separate and protect kernel memory from user processes. 

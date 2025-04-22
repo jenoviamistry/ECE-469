@@ -1,3 +1,4 @@
+//sched.c
 #include <inc/assert.h>
 #include <inc/x86.h>
 #include <kern/spinlock.h>
@@ -30,6 +31,20 @@ sched_yield(void)
 	// below to halt the cpu.
 
 	// LAB 4: Your code here.
+	int start = 0;
+
+	if (curenv)
+	{
+		start = ENVX(curenv->env_id) + 1;
+	}
+
+	for (int i = 0; i < NENV; ++i)
+	{
+		int k = (start + i) % NENV;
+		if (envs[k].env_status == ENV_RUNNABLE) env_run(&envs[k]);
+	}
+
+	if (curenv && curenv->env_status == ENV_RUNNING) env_run(curenv);
 
 	// sched_halt never returns
 	sched_halt();
@@ -77,7 +92,7 @@ sched_halt(void)
 		"pushl $0\n"
         // LAB 4:
 		// Uncomment the following line after completing exercise 13
-		//"sti\n"
+		"sti\n"
 		"1:\n"
 		"hlt\n"
 		"jmp 1b\n"

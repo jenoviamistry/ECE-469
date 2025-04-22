@@ -1,0 +1,43 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Kernel",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "kernel"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"],
+            "detail": "Build the JOS kernel"
+        },
+        {
+            "label": "Run QEMU with GDB",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "qemu-gdb"
+            ],
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            },
+            "problemMatcher": [],
+            "detail": "Run QEMU with GDB support"
+        },
+        {
+            "label": "Get GDB Port",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "print-gdbport"
+            ],
+            "problemMatcher": [],
+            "detail": "Get the dynamically assigned GDB port"
+        }
+    ]
+}

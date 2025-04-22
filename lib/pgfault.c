@@ -1,3 +1,7 @@
+//pgfault.c
+
+// pgfault.c
+
 // User-level page fault handler support.
 // Rather than register the C page fault handler directly with the
 // kernel as the page fault handler, we register the assembly language
@@ -24,14 +28,24 @@ void (*_pgfault_handler)(struct UTrapframe *utf);
 void
 set_pgfault_handler(void (*handler)(struct UTrapframe *utf))
 {
+	//cprintf("faultnostack: about to set upcall = 0x%08x\n", _pgfault_upcall);
 	int r;
 
-	if (_pgfault_handler == 0) {
+	if (_pgfault_handler == 0) 
+	{
 		// First time through!
 		// LAB 4: Your code here.
-		panic("set_pgfault_handler not implemented");
+		r = sys_page_alloc(0, (void*)(UXSTACKTOP - PGSIZE), PTE_U|PTE_W|PTE_P);
+		if (r < 0) panic("In set_pgfault_handler, sys_page_alloc failed");
+		
+		r = sys_env_set_pgfault_upcall(0, _pgfault_upcall);
+		if (r < 0) panic("In set_pgfault_handler, sys_env_set_pgfault_upcall failed");
+		
+
+		//panic("set_pgfault_handler not implemented");
 	}
 
 	// Save handler pointer for assembly to call.
 	_pgfault_handler = handler;
 }
+

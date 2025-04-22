@@ -1,3 +1,4 @@
+// init.c 
 /* See COPYRIGHT for copyright information. */
 
 #include <inc/stdio.h>
@@ -17,10 +18,21 @@
 
 static void boot_aps(void);
 
-
 void
 i386_init(void)
 {
+	extern char edata[], end[];
+
+	// Before doing anything else, complete the ELF loading process.
+	// Clear the uninitialized global data (BSS) section of our program.
+	// This ensures that all static/global variables start out zero.
+	memset(edata, 0, end - edata);
+
+	// disable the x87 so no real floating instructions can execute:
+	//uint32_t cr0 = rcr0();
+	//cr0 |= CR0_EM;       // CR0_EM == 0x4, the 'Emulation' bit
+	//lcr0(cr0);
+
 	// Initialize the console.
 	// Can't call cprintf until after we do this!
 	cons_init();
@@ -43,9 +55,18 @@ i386_init(void)
 
 	// Acquire the big kernel lock before waking up APs
 	// Your code here:
+	lock_kernel();
 
 	// Starting non-boot CPUs
 	boot_aps();
+
+	//ENV_CREATE(user_yield, ENV_TYPE_USER);
+	//ENV_CREATE(user_yield, ENV_TYPE_USER);
+
+	//ENV_CREATE(user_yield, ENV_TYPE_USER);
+
+    //ENV_CREATE(user_dumbfork, ENV_TYPE_USER);
+
 
 	// Start fs.
 	ENV_CREATE(fs_fs, ENV_TYPE_FS);
@@ -115,9 +136,11 @@ mp_main(void)
 	// only one CPU can enter the scheduler at a time!
 	//
 	// Your code here:
+	lock_kernel();
+	sched_yield();
 
 	// Remove this after you finish Exercise 6
-	for (;;);
+	//for (;;);
 }
 
 /*

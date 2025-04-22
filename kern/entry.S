@@ -90,8 +90,8 @@ spin:	jmp	spin
 ###################################################################
 	.p2align	PGSHIFT		# force page alignment
 	.globl		bootstack
-bootstack:
-	.space		KSTKSIZE
-	.globl		bootstacktop   
-bootstacktop:
+bootstack: # marks the start of the stack region
+	.space		KSTKSIZE # defines size of the stack
+	.globl		bootstacktop   # reserves the memory 
+bootstacktop: # marks the end of the stack region
 
