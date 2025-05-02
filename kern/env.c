@@ -1,6 +1,7 @@
 // env.c 
 /* See COPYRIGHT for copyright information. */
 
+#include "env.h"
 #include <inc/x86.h>
 #include <inc/mmu.h>
 #include <inc/error.h>
@@ -489,7 +490,7 @@ env_create(uint8_t *binary, enum EnvType type)
         panic("all NENV environments are allocated!\n");
     }
     else if (ret == -E_NO_MEM) {
-        panic("not enouth memory!\n");
+        panic("not enough memory!\n");
     }
     else if (new_env == NULL) {
         panic("new env is not allocated!\n");
@@ -500,6 +501,11 @@ env_create(uint8_t *binary, enum EnvType type)
 
 	// If this is the file server (type == ENV_TYPE_FS) give it I/O privileges.
 	// LAB 5: Your code here.
+    if (type == ENV_TYPE_FS) 
+        new_env->env_tf.tf_eflags |= FL_IOPL_3;
+    else
+        new_env->env_tf.tf_eflags &= ~FL_IOPL_MASK;
+
 }
 
 //

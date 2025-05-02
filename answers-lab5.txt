@@ -1,0 +1,6 @@
+1. You do not have to do anything else to ensure that this I/O privilege setting
+is saved and restored properly when you switch from one environment to another.
+This is because the I/O privilege level is part of each environment's trapframe. 
+When the kernel switches to a new environment, it restores the saved trapframe,
+which includes the correct IO privilege setting for that environment. Therefore,
+the IO privilege level is preserved along switching environments.

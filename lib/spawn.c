@@ -129,6 +129,7 @@ spawn(const char *prog, const char **argv)
 	if ((r = copy_shared_pages(child)) < 0)
 		panic("copy_shared_pages: %e", r);
 
+
 	child_tf.tf_eflags |= FL_IOPL_3;   // devious: see user/faultio.c
 	if ((r = sys_env_set_trapframe(child, &child_tf)) < 0)
 		panic("sys_env_set_trapframe: %e", r);
@@ -302,6 +303,16 @@ static int
 copy_shared_pages(envid_t child)
 {
 	// LAB 5: Your code here.
+	int ret;
+	uintptr_t va;
+
+	for (va = 0; va < UTOP; va += PGSIZE)
+	{
+		if (!(uvpd[PDX(va)] & PTE_P)) continue; // does it map correct
+		if (!(uvpt[PGNUM(va)] & PTE_P)) continue; // does the va map to the page
+		if (!(uvpt[PGNUM(va)] & PTE_SHARE)) continue; // is the page shared
+		if ((ret = sys_page_map(0, (void*)va, child, (void*)va, uvpt[PGNUM(va)] & PTE_SYSCALL))< 0) panic("spawn copy_shared_pages sys_page_map failed");
+	}
 	return 0;
 }
 

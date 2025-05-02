@@ -55,7 +55,17 @@ again:
 			// then close the original 'fd'.
 
 			// LAB 5: Your code here.
-			panic("< redirection not implemented");
+			if ((fd = open(t, O_RDONLY)) < 0) // open file in read only
+			{
+				cprintf("open %s for read: %e\n", t, fd); // print error code
+				exit();
+			}
+			if (fd != 0)
+			{
+				dup(fd, 0); // dup file descrip
+				close(fd);
+			}
+			//panic("< redirection not implemented"); // open 
 			break;
 
 		case '>':	// Output redirection

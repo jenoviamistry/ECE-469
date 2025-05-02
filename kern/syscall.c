@@ -1,5 +1,6 @@
 /* See COPYRIGHT for copyright information. */
 
+#include "trap.h"
 #include <inc/x86.h>
 #include <inc/error.h>
 #include <inc/string.h>
@@ -52,8 +53,8 @@ sys_getenvid(void)
 static int
 sys_env_destroy(envid_t envid)
 {
-	int ret;
-	struct Env *env;
+	int r;
+	struct Env *e;
 
 	if ((r = envid2env(envid, &e, 1)) < 0)
 		return r;
@@ -184,7 +185,28 @@ sys_env_set_trapframe(envid_t envid, struct Trapframe *tf)
 	// LAB 5: Your code here.
 	// Remember to check whether the user has supplied us with a good
 	// address!
-	panic("sys_env_set_trapframe not implemented");
+	struct Env *env; 
+	int ret;
+
+	// check that accessible by user
+	user_mem_assert(curenv, tf, sizeof(struct Trapframe), PTE_P|PTE_U);
+
+	// check env exists and permissions are right
+	if ((ret = envid2env(envid, &env, 1)) < 0) return ret;
+
+	env->env_tf = *tf; // copy trapframe
+	env->env_tf.tf_cs |= 3;
+	env->env_tf.tf_ds |= 3;
+	env->env_tf.tf_es |= 3;
+	env->env_tf.tf_ss |= 3;
+	env->env_tf.tf_eflags = (tf->tf_eflags & ~FL_IOPL_MASK) | FL_IF;
+
+
+	//env->env_tf.tf_eflags = env->env_tf.tf_eflags & ~FL_IOPL_MASK;
+
+	return 0;
+
+	//panic("sys_env_set_trapframe not implemented");
 }
 
 // Set the page fault upcall for 'envid' by modifying the corresponding struct
@@ -530,7 +552,8 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 			return sys_ipc_recv((void *)a1);
 		case SYS_ipc_try_send:
 			return sys_ipc_try_send((envid_t)a1, (uint32_t)a2, (void *)a3, (unsigned)a4);
-		
+		case SYS_env_set_trapframe:
+			return sys_env_set_trapframe((envid_t)a1, (struct Trapframe *)a2);
 		default:
 			return -E_INVAL;
 	}
