@@ -19,6 +19,9 @@ __pycache__/
 /myapi.key
 /.suf
 
+# Clangd cache
+.cache/
+
 # nfs
 .nfs*
 
