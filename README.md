@@ -70,6 +70,7 @@ Answers to the conceptual and implementation questions are provided in `answers-
 
 Submitted via:
 
+```bash
 git add README.md answers-lab5.txt
 git commit -am "Final submission for Lab 5"
 make handin
